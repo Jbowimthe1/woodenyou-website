@@ -2,3 +2,103 @@
 /* Current shop pieces */
 .product-intro p{max-width:52ch}.current-products{padding-top:10px}.featured-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.featured-product{display:flex;flex-direction:column}.product-photo{width:100%;height:380px;object-fit:cover;object-position:center 53%}.featured-product .copy{padding:26px;display:flex;flex-direction:column;align-items:flex-start;flex:1}.featured-product h3{font:normal 2rem/1.1 Georgia,"Times New Roman",serif;margin:10px 0 12px}.featured-product .copy>p:first-of-type{margin:0 0 18px}.product-price{font:normal 2rem/1.1 Georgia,"Times New Roman",serif;color:var(--cream);margin:0}.product-price span{font:normal .9rem/1.4 Inter,Arial,sans-serif;color:var(--muted)}.product-note{color:var(--muted);margin:8px 0 20px}.featured-product .btn{margin-top:auto}.detail-photo{margin:24px 0 0;max-width:420px}.detail-photo img{width:100%;height:300px;object-fit:cover;object-position:center 42%;border-radius:18px;border:1px solid var(--line)}.detail-photo figcaption{color:var(--muted);font-size:.9rem;line-height:1.5;margin-top:10px}.home-products .section-head p{max-width:42ch}
 @media(max-width:760px){.featured-products{grid-template-columns:1fr}.product-photo{height:320px}.featured-product h3{font-size:1.75rem}}
+
+
+/* Mobile storefront: compact product cards, no stretched or cropped product photos.
+   Desktop product styling is intentionally unchanged. */
+@media (max-width:760px) {
+  .home-products .featured-products,
+  .current-products .featured-products {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:16px;
+  }
+  .home-products .featured-products > .featured-product,
+  .current-products .featured-products > .featured-product {
+    display:grid;
+    grid-template-columns:minmax(0,43%) minmax(0,57%);
+    align-items:stretch;
+    overflow:hidden;
+    border-radius:20px;
+  }
+  .home-products .featured-products > .featured-product > .product-photo,
+  .current-products .featured-products > .featured-product > .product-photo {
+    display:block;
+    width:100%;
+    height:100%;
+    min-height:215px;
+    max-height:310px;
+    object-fit:contain;
+    object-position:center;
+    background:#211810;
+  }
+  .home-products .featured-products > .featured-product > .copy,
+  .current-products .featured-products > .featured-product > .copy {
+    padding:15px 14px 16px;
+    min-width:0;
+    justify-content:center;
+  }
+  .home-products .featured-product h3,
+  .current-products .featured-products .featured-product h3 {
+    font-size:clamp(1.03rem,4.3vw,1.36rem);
+    line-height:1.15;
+    margin:7px 0 9px;
+  }
+  .home-products .featured-product .kicker,
+  .current-products .featured-products .featured-product .kicker {
+    font-size:.63rem;
+    letter-spacing:.07em;
+    line-height:1.35;
+  }
+  .home-products .featured-product .copy > p:first-of-type,
+  .current-products .featured-products .featured-product .copy > p:first-of-type {
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    line-clamp:3;
+    overflow:hidden;
+    font-size:.82rem;
+    line-height:1.43;
+    margin:0 0 8px;
+  }
+  .current-products .featured-products .featured-product .product-price {
+    font-size:1.45rem;
+    line-height:1.1;
+    margin:4px 0 8px;
+  }
+  .current-products .featured-products .featured-product .product-price span {
+    font-size:.74rem;
+  }
+  .current-products .featured-products .featured-product .product-note {
+    font-size:.75rem;
+    line-height:1.35;
+    margin:3px 0 8px;
+  }
+  .home-products .featured-product .btn,
+  .current-products .featured-products .featured-product .btn {
+    max-width:100%;
+    padding:9px 10px;
+    border-radius:12px;
+    font-size:.78rem;
+    text-align:center;
+    line-height:1.35;
+    margin-top:auto;
+    white-space:normal;
+  }
+  /* Detail views for the white oak tray retain their full two-photo row. */
+  .current-products .featured-products > .featured-product > div[style*="display:flex"] {
+    grid-column:1/-1;
+  }
+  .current-products > .featured-product > .product-photo {
+    height:auto;
+    max-height:65vh;
+    object-fit:contain;
+    background:#211810;
+  }
+  .current-products .detail-photo img {
+    height:auto;
+    max-height:340px;
+    object-fit:contain;
+    background:#211810;
+  }
+}
