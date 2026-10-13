@@ -141,3 +141,35 @@ jobs:
           done
           echo 'PawPrint gallery or approved hero photo failed direct public-site verification.' >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      - name: Verify $950 finished Legacy Flag and $99 BamX front and reverse on live site
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?flag-bamx-check=${GITHUB_SHA}" -o /tmp/woodenyou-new-gallery.html &&
+              grep -q 'id="legacy-wavy-flag"' /tmp/woodenyou-new-gallery.html &&
+              grep -q 'Wavy Wooden American Flag' /tmp/woodenyou-new-gallery.html &&
+              grep -q '\$950' /tmp/woodenyou-new-gallery.html &&
+              grep -q 'id="bamx-bourbon-board"' /tmp/woodenyou-new-gallery.html &&
+              grep -q '\$99' /tmp/woodenyou-new-gallery.html &&
+              grep -q 'src="assets/products/bamx-bourbon-board-front.jpg"' /tmp/woodenyou-new-gallery.html &&
+              grep -q 'src="assets/products/bamx-bourbon-board.jpg"' /tmp/woodenyou-new-gallery.html; then
+              all_good=1
+              for photo in legacy-wavy-flag-finished-main.jpg legacy-wavy-flag-finished-outdoor.jpg legacy-wavy-flag-finished-angle.jpg bamx-bourbon-board-front.jpg; do
+                if ! curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/assets/products/${photo}?flag-bamx-check=${GITHUB_SHA}" -o /tmp/woodenyou-check-photo.jpg ||
+                   ! cmp -s "publish/assets/products/${photo}" /tmp/woodenyou-check-photo.jpg; then
+                  all_good=0
+                  break
+                fi
+              done
+              if [ "${all_good}" -eq 1 ]; then
+                echo 'Verified the exact real $950 finished flag photos and $99 BamX front image on the public GoDaddy site.' >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+            fi
+            sleep 8
+          done
+          echo 'Live Flag or BamX photos and prices could not be independently verified.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
