@@ -8,4 +8,5 @@ deployment:
     - /bin/cp contact.html $DEPLOYPATH
     - /bin/cp custom.html $DEPLOYPATH
     - /bin/cp gallery.html $DEPLOYPATH
+    - /bin/cp melted-edge.html $DEPLOYPATH
     - /bin/cp -R assets $DEPLOYPATH
