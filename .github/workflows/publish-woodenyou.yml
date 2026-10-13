@@ -272,3 +272,26 @@ jobs:
           done
           echo "Missing live referenced site assets: ${missing}" >> "$GITHUB_STEP_SUMMARY"
           if [ "$missing" -ne 0 ]; then echo "::warning::Missing referenced images detected. Investigate before advertising."; fi
+
+      - name: Verify complete PawPrint product appears first without cropping
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/index.html?pawprint-first=${GITHUB_SHA}" -o /tmp/woodenyou-home-pawprint.html &&
+               curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?pawprint-first=${GITHUB_SHA}" -o /tmp/woodenyou-gallery-pawprint.html &&
+               grep -Fq 'src="assets/products/pawprint-serving-tray-hero.webp"' /tmp/woodenyou-home-pawprint.html &&
+               grep -Fq 'src="assets/products/pawprint-serving-tray-hero.webp"' /tmp/woodenyou-gallery-pawprint.html &&
+               grep -Fq 'object-fit:contain;object-position:center;background:#211810' /tmp/woodenyou-home-pawprint.html &&
+               grep -Fq 'object-fit:contain;object-position:center;background:#211810' /tmp/woodenyou-gallery-pawprint.html &&
+               ! grep -Fq 'src="assets/products/pawprint-serving-tray.jpg"' /tmp/woodenyou-home-pawprint.html &&
+               curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/assets/products/pawprint-serving-tray-hero.webp?verify=${GITHUB_SHA}" -o /tmp/woodenyou-hero-complete.webp &&
+               cmp -s publish/assets/products/pawprint-serving-tray-hero.webp /tmp/woodenyou-hero-complete.webp; then
+              echo "Verified finished full PawPrint image first on homepage and gallery, with non-cropping layout, on live site." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 8
+          done
+          echo 'PawPrint first-photo or full-product layout could not be verified on live site.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
