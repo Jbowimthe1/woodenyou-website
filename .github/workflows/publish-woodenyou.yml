@@ -1,0 +1,61 @@
+name: Publish WoodenYou to GoDaddy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'assets/**'
+      - '.github/workflows/publish-woodenyou.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: woodenyou-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Securely publish site files
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FTP_HOST: ${{ secrets.GODADDY_FTP_SERVER }}
+      FTP_USER: ${{ secrets.GODADDY_FTP_USERNAME }}
+      FTP_PASS: ${{ secrets.GODADDY_FTP_PASSWORD }}
+    steps:
+      - name: Report missing connection setup
+        if: ${{ env.FTP_HOST == '' || env.FTP_USER == '' || env.FTP_PASS == '' }}
+        run: |
+          echo 'GoDaddy publishing is not connected yet. Create repository Actions secrets GODADDY_FTP_SERVER, GODADDY_FTP_USERNAME, and GODADDY_FTP_PASSWORD.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No site files were changed.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check out website
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        uses: actions/checkout@v6
+
+      - name: Package only public website files
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p publish
+          cp index.html about.html beams.html contact.html custom.html gallery.html melted-edge.html publish/
+          cp -R assets publish/assets
+
+      - name: Deploy by encrypted FTPS
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ env.FTP_HOST }}
+          username: ${{ env.FTP_USER }}
+          password: ${{ env.FTP_PASS }}
+          protocol: ftps
+          port: 21
+          local-dir: ./publish/
+          server-dir: ./
+          security: strict
+          dangerous-clean-slate: false
+          log-level: standard
