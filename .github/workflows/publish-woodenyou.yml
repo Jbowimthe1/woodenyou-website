@@ -174,35 +174,7 @@ jobs:
           echo 'Live Flag or BamX photos and prices could not be independently verified.' >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
-      - name: Verify the exact $119 standard and $139 personalized Bowen listing
-        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3 4 5 6; do
-            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?bowen-check=${GITHUB_SHA}" -o /tmp/woodenyou-bowen.html &&
-              grep -q 'id="bowen-family-inlay"' /tmp/woodenyou-bowen.html &&
-              grep -q '\$119' /tmp/woodenyou-bowen.html &&
-              grep -q '\$139 personalized' /tmp/woodenyou-bowen.html; then
-              good=1
-              for photo in bowen-family-inlay-front.jpg bowen-family-inlay-reverse.jpg bowen-family-inlay-angle.jpg; do
-                if ! curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/assets/products/${photo}?bowen-check=${GITHUB_SHA}" -o /tmp/woodenyou-bowen-photo.jpg ||
-                  ! cmp -s "publish/assets/products/${photo}" /tmp/woodenyou-bowen-photo.jpg; then
-                  good=0
-                  break
-                fi
-              done
-              if [ "${good}" -eq 1 ]; then
-                echo 'Verified exact real Bowen inlay photos and $119/$139 prices on the public site.' >> "$GITHUB_STEP_SUMMARY"
-                exit 0
-              fi
-            fi
-            sleep 8
-          done
-          echo 'Bowen board public site listing or photos could not be verified.' >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-
-      - name: Verify the exact user-provided Bowen photos and truthful engraving copy
+      - name: Verify $279 Bowen listing with user-provided original photos
         if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
         shell: bash
         run: |
@@ -212,8 +184,8 @@ jobs:
               grep -q 'id="bowen-family-inlay"' /tmp/woodenyou-real-bowen.html &&
               grep -q 'Family Name Cutting Board' /tmp/woodenyou-real-bowen.html &&
               grep -q 'Est June 7, 1985' /tmp/woodenyou-real-bowen.html &&
-              grep -q '\$119' /tmp/woodenyou-real-bowen.html &&
-              grep -q '\$139 personalized' /tmp/woodenyou-real-bowen.html &&
+              grep -q '\$279' /tmp/woodenyou-real-bowen.html &&
+              ! grep -q '\$139 personalized' /tmp/woodenyou-real-bowen.html &&
               grep -q 'src="assets/products/bowen-family-board-actual-kitchen.jpg"' /tmp/woodenyou-real-bowen.html &&
               ! grep -q 'src="assets/products/bowen-family-inlay-front.jpg"' /tmp/woodenyou-real-bowen.html; then
               good=1
@@ -225,7 +197,7 @@ jobs:
                 fi
               done
               if [ "${good}" -eq 1 ]; then
-                echo 'Verified exact user-supplied Bowen photos, engraving copy, and prices on live WoodenYou.us.' >> "$GITHUB_STEP_SUMMARY"
+                echo 'Verified $279 Bowen price, engraved text, and exact user-supplied product photographs on live WoodenYou.us.' >> "$GITHUB_STEP_SUMMARY"
                 exit 0
               fi
             fi
