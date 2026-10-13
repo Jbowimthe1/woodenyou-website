@@ -1,0 +1,49 @@
+name: Back up live WoodenYou site imagery into source
+
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-site-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover actual existing WoodenYou files from production
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/beams
+          for asset in \
+            assets/crest.jpeg \
+            assets/wood-bg.jpg \
+            assets/beams/IMG_0326.jpeg \
+            assets/beams/IMG_0390.jpeg \
+            assets/beams/IMG_3148.jpeg \
+            assets/beams/IMG_3171.jpeg; do
+            curl --fail --location --silent --show-error --retry 3 --connect-timeout 10 --max-time 60 "https://woodenyou.us/${asset}" -o "$asset"
+            if [ "$(wc -c < "$asset")" -lt 5000 ]; then echo "Image unexpectedly small: ${asset}"; exit 1; fi
+            type="$(file --brief --mime-type "$asset")"
+            if [ "$type" != "image/jpeg" ]; then echo "Unexpected media type ${type} for ${asset}"; exit 1; fi
+            echo "Recovered ${asset} ($(wc -c < "$asset") bytes)"
+          done
+      - name: Commit actual images to their source repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/crest.jpeg assets/wood-bg.jpg assets/beams
+          if git diff --cached --quiet; then
+            echo 'All required image files are already backed up.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m 'Preserve actual live WoodenYou crest, background and beam photos in source'
+          git push
+          echo 'Recovered and committed original WoodenYou images for future deploys.' >> "$GITHUB_STEP_SUMMARY"
