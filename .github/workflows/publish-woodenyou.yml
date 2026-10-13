@@ -205,3 +205,30 @@ jobs:
           done
           echo 'New Bowen front images failed public-site verification.' >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      - name: Verify actual public-page copy and absence of placeholders
+        if: \${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/?content-check=\${GITHUB_SHA}" -o /tmp/woodenyou-new-home.html &&
+              curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/about.html?content-check=\${GITHUB_SHA}" -o /tmp/woodenyou-new-about.html &&
+              curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/custom.html?content-check=\${GITHUB_SHA}" -o /tmp/woodenyou-new-custom.html &&
+              curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/contact.html?content-check=\${GITHUB_SHA}" -o /tmp/woodenyou-new-contact.html &&
+              curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?content-check=\${GITHUB_SHA}" -o /tmp/woodenyou-new-gallery-copy.html &&
+              grep -Fq 'Real wood. Real workmanship.' /tmp/woodenyou-new-home.html &&
+              grep -Fq 'Made by hand in Newcastle, Oklahoma.' /tmp/woodenyou-new-about.html &&
+              grep -Fq 'Business, club &amp; group orders' /tmp/woodenyou-new-custom.html &&
+              grep -Fq 'Request an order or custom quote' /tmp/woodenyou-new-contact.html &&
+              grep -Fq 'More actual WoodenYou pieces' /tmp/woodenyou-new-gallery-copy.html &&
+              ! grep -Fq 'This page tells the story behind WoodenYou' /tmp/woodenyou-new-about.html &&
+              ! grep -Fq 'This page can later hold pricing guidance' /tmp/woodenyou-new-custom.html &&
+              ! grep -Fq 'CNC Preciscion' /tmp/woodenyou-new-home.html; then
+              echo 'Verified all five updated public pages show authentic copy; both known placeholder passages are gone.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 8
+          done
+          echo 'Public site failed placeholder-removal or authentic-page-copy verification.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
