@@ -294,6 +294,40 @@ jobs:
           done
           echo "Broken currently referenced public files: $failures" >> "$GITHUB_STEP_SUMMARY"
           test "$failures" -eq 0
+      - name: Verify actual externally hosted WoodenYou product photographs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t urls < <(python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          class Photos(HTMLParser):
+              def __init__(self): super().__init__(); self.urls=set()
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'img':
+                      src=dict(attrs).get('src','')
+                      if src.startswith('https://'): self.urls.add(src)
+          urls=set()
+          for path in Path('publish').glob('*.html'):
+              parser=Photos(); parser.feed(path.read_text(encoding='utf-8'))
+              urls.update(parser.urls)
+          for url in sorted(urls): print(url)
+          PY
+          )
+          echo "Checking ${#urls[@]} externally hosted product photo URLs"
+          failures=0
+          for url in "${urls[@]}"; do
+            status="$(curl --location --silent --show-error --max-time 25 --output /tmp/woodenyou-external-photo --write-out '%{http_code}' "${url}" || true)"
+            size="$(wc -c < /tmp/woodenyou-external-photo 2>/dev/null || echo 0)"
+            if [ "$status" = "200" ] && [ "$size" -gt 10000 ]; then
+              echo "VERIFIED $url ($size bytes)"
+            else
+              echo "::error::Public product photo missing or empty: $url (HTTP $status, $size bytes)"
+              failures=$((failures+1))
+            fi
+          done
+          echo "Broken externally hosted shop photos: $failures" >> "$GITHUB_STEP_SUMMARY"
+          test "$failures" -eq 0
       - name: Verify complete PawPrint product appears first without cropping
         if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
         shell: bash
