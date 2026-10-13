@@ -121,3 +121,23 @@ jobs:
           done
           echo 'Upload ran but the new public gallery listings or product photos did not verify.' >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      - name: Verify the live PawPrint gallery hero matches the approved photo
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?pawprint-check=${GITHUB_SHA}" -o /tmp/woodenyou-pawprint-gallery.html &&
+              grep -q 'id="pawprint-serving-tray"' /tmp/woodenyou-pawprint-gallery.html &&
+              grep -q 'src="assets/products/pawprint-serving-tray-hero.webp"' /tmp/woodenyou-pawprint-gallery.html &&
+              grep -q '\$75' /tmp/woodenyou-pawprint-gallery.html &&
+              curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/assets/products/pawprint-serving-tray-hero.webp?pawprint-check=${GITHUB_SHA}" -o /tmp/woodenyou-pawprint-hero.webp &&
+              cmp -s publish/assets/products/pawprint-serving-tray-hero.webp /tmp/woodenyou-pawprint-hero.webp; then
+              echo 'Verified live $75 PawPrint gallery card and exact approved tabletop photograph.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 8
+          done
+          echo 'PawPrint gallery or approved hero photo failed direct public-site verification.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
