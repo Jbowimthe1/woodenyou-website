@@ -89,3 +89,35 @@ jobs:
           done
           echo 'Deployment ran, but the live Melted Edge page could not be verified.' >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      - name: Verify actual live gallery photographs
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/gallery.html?verify=${GITHUB_SHA}" -o /tmp/woodenyou-gallery.html &&
+              grep -q 'id="white-oak-serving-tray"' /tmp/woodenyou-gallery.html &&
+              grep -q 'id="yukon-66-coasters"' /tmp/woodenyou-gallery.html &&
+              grep -q '\$89' /tmp/woodenyou-gallery.html; then
+              all_good=1
+              for photo in white-oak-tray.jpg puzzle-serving-trays.jpg bamx-bourbon-board.jpg cherry-board-supports.jpg yukon-66-coasters.jpg; do
+                if ! curl --fail --silent --show-error --location --max-time 20 "https://woodenyou.us/assets/products/${photo}?verify=${GITHUB_SHA}" -o /tmp/woodenyou-product-photo.jpg; then
+                  all_good=0
+                  break
+                fi
+                if [ "$(wc -c < /tmp/woodenyou-product-photo.jpg)" -lt 10000 ]; then
+                  echo "Photo too small or not a real image: ${photo}"
+                  all_good=0
+                  break
+                fi
+              done
+              if [ "${all_good}" -eq 1 ]; then
+                echo 'Verified live gallery with priced White Oak and Yukon listings and all five real photo files.' >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+            fi
+            sleep 8
+          done
+          echo 'Upload ran but the new public gallery listings or product photos did not verify.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
