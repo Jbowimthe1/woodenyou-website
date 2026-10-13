@@ -22,7 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      FTP_HOST: ${{ secrets.GODADDY_FTP_SERVER }}
+      # GoDaddy cPanel hosting server IP confirmed in the account settings.
+      # Use the IP directly while ftp.woodenyou.us has no resolvable DNS record.
+      FTP_HOST: 132.148.178.15
       FTP_USER: ${{ secrets.GODADDY_FTP_USERNAME }}
       FTP_PASS: ${{ secrets.GODADDY_FTP_PASSWORD }}
     steps:
