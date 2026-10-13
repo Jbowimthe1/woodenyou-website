@@ -22,9 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      # GoDaddy cPanel hosting server IP confirmed in the account settings.
-      # Use the IP directly while ftp.woodenyou.us has no resolvable DNS record.
-      FTP_HOST: 132.148.178.15
+      # GoDaddy FTPS certificate covers *.prod.phx3.secureserver.net.
+      # Resolve this alias to the hosting IP confirmed by the account owner.
+      FTP_HOST: woodenyou.prod.phx3.secureserver.net
       FTP_USER: ${{ secrets.GODADDY_FTP_USERNAME }}
       FTP_PASS: ${{ secrets.GODADDY_FTP_PASSWORD }}
     steps:
@@ -47,6 +47,13 @@ jobs:
           mkdir -p publish
           cp index.html about.html beams.html contact.html custom.html gallery.html melted-edge.html publish/
           cp -R assets publish/assets
+
+      - name: Resolve verified GoDaddy server address with matching TLS identity
+        if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
+        shell: bash
+        run: |
+          printf '132.148.178.15 woodenyou.prod.phx3.secureserver.net\n' | sudo tee -a /etc/hosts
+          getent hosts woodenyou.prod.phx3.secureserver.net
 
       - name: Deploy by encrypted FTPS
         if: ${{ env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASS != '' }}
