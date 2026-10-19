@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p publish
-          cp index.html about.html beams.html contact.html custom.html gallery.html melted-edge.html publish/
+          cp index.html about.html beams.html contact.html custom.html gallery.html melted-edge.html ou-gameday.html publish/
           cp -R assets publish/assets
 
       - name: Resolve verified GoDaddy server address with matching TLS identity
