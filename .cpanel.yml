@@ -10,4 +10,5 @@ deployment:
     - /bin/cp gallery.html $DEPLOYPATH
     - /bin/cp melted-edge.html $DEPLOYPATH
     - /bin/cp ou-gameday.html $DEPLOYPATH
+    - /bin/cp order.html $DEPLOYPATH
     - /bin/cp -R assets $DEPLOYPATH
